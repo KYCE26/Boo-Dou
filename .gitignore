@@ -37,3 +37,6 @@ frontend/.icon-build/
 
 # Uploaded images (user data, never committed)
 backend/data/
+
+# Gambar referensi desain (berhak cipta, tidak boleh masuk repo)
+design-ref/
