@@ -24,7 +24,7 @@ const { theme, toggle: toggleTheme } = useTheme()
 
 const listEl = ref<HTMLElement | null>(null)
 const composer = ref<InstanceType<typeof ChatComposer> | null>(null)
-const viewing = ref<{ image: Attachment; label: string } | null>(null)
+const viewing = ref<{ image: Attachment; label: string; origin: HTMLElement | null } | null>(null)
 const dragging = ref(false)
 let dragDepth = 0
 
@@ -87,8 +87,8 @@ watch(loadState, async (s) => {
 const THUMB_HEIGHT = 96
 const thumbWidth = (a: Attachment) => Math.min(160, Math.max(48, Math.round((a.width / a.height) * THUMB_HEIGHT)))
 
-function openViewer(image: Attachment, index: number, total: number) {
-  viewing.value = { image, label: copy.conversation.imageLabel(index + 1, total) }
+function openViewer(image: Attachment, index: number, total: number, origin: EventTarget | null) {
+  viewing.value = { image, label: copy.conversation.imageLabel(index + 1, total), origin: origin as HTMLElement | null }
 }
 
 const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files')
@@ -251,7 +251,7 @@ const isLastStreaming = (i: number) => isStreaming.value && i === messages.value
             v-for="(msg, i) in messages"
             :key="msg.localId"
             class="message"
-            :class="msg.role === 'user' ? 'from-user' : 'from-assistant'"
+            :class="[msg.role === 'user' ? 'from-user' : 'from-assistant', { fresh: msg.fresh }]"
           >
             <span class="visually-hidden">{{ msg.role === 'user' ? copy.conversation.you : copy.conversation.assistant }}</span>
             <div v-if="isLastStreaming(i)" class="writing" aria-hidden="true">
@@ -264,7 +264,7 @@ const isLastStreaming = (i: number) => isStreaming.value && i === messages.value
                 type="button"
                 class="thumb"
                 :aria-label="copy.conversation.viewImage(j + 1)"
-                @click="openViewer(a, j, msg.attachments.length)"
+                @click="openViewer(a, j, msg.attachments.length, $event.currentTarget)"
               >
                 <img :src="attachmentUrl(a.id)" :width="thumbWidth(a)" :height="THUMB_HEIGHT" alt="" loading="lazy" />
               </button>
@@ -312,7 +312,7 @@ const isLastStreaming = (i: number) => isStreaming.value && i === messages.value
       <p>{{ copy.conversation.dropHint }}</p>
     </div>
 
-    <ImageViewer :image="viewing?.image ?? null" :label="viewing?.label ?? ''" @close="viewing = null" />
+    <ImageViewer :image="viewing?.image ?? null" :label="viewing?.label ?? ''" :origin="viewing?.origin ?? null" @close="viewing = null" />
   </div>
 </template>
 
@@ -560,6 +560,42 @@ const isLastStreaming = (i: number) => isStreaming.value && i === messages.value
   display: flex;
   align-items: center;
   height: 36px;
+  animation: writing-in 220ms ease-out both;
+}
+
+/* New lines arrive from the side that sent them: the user from the right,
+   Boo Dou rising from below, so the eye knows who just spoke. */
+.message.fresh {
+  animation: 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.from-user.fresh {
+  animation-name: msg-from-right;
+}
+
+.from-assistant.fresh {
+  animation-name: msg-rise;
+}
+
+@keyframes msg-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes msg-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes writing-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
 }
 
 .pending {

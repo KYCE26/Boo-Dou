@@ -95,3 +95,21 @@ Bintang 4 sudut di pita topi tidak dipakai sebagai ikon UI, karena termasuk pola
 ## Tema
 
 Terang dan gelap sama-sama jalan penuh. Tema terang jadi default karena persona gentleman dan nuansa kertas washi lebih kuat di terang. Tema gelap ikut `prefers-color-scheme` kalau user belum memilih.
+
+## Motion
+
+MOTION 3: koreografi, tetapi setiap gerak dipicu oleh tindakan user dan punya alasan. Hanya `transform` dan `opacity` yang dianimasikan supaya tetap 60fps. Semua gerak mati saat `prefers-reduced-motion: reduce` (CSS lewat `base.css`, gerak berbasis JS lewat `lib/motion.ts`).
+
+| Momen | Gerak | Alasan |
+|---|---|---|
+| Pesan user terkirim | Masuk dari kanan, 280ms | Mata tahu siapa yang baru bicara: pesan datang dari sisi pengirimnya. Riwayat yang dimuat ulang tidak bergerak. |
+| Jawaban Boo Dou mulai | Naik dari bawah, 280ms | Sama, dari sisi Boo Dou. |
+| Jawaban sedang berjalan | Maskot kecil muncul (skala dan opacity), lalu bob selama thinking | Penanda bahwa jawaban belum selesai. Bob berhenti begitu jawaban selesai, jadi tidak ada loop tanpa pemicu. |
+| State maskot berganti | Hop sekali saat jawaban selesai, goyang sekali saat error | Maskot bereaksi pada hasil, bukan bergerak terus. |
+| Drawer riwayat | Geser masuk dari kiri 240ms, keluar 160ms | Drawer tinggal di sisi kiri; geraknya menunjukkan dari mana ia datang dan ke mana ia kembali. |
+| Dialog hapus | Muncul dengan sedikit skala dan opacity, keluar lebih cepat | Dialog terasa terangkat dari halaman tanpa melompat. |
+| Viewer gambar | Gambar membesar dari thumbnail (FLIP) dan kembali ke thumbnail saat ditutup | User melihat gambar mana yang dibuka dan ke mana fokus kembali. |
+| Ganti tema | Crossfade seluruh halaman, 280ms (View Transitions) | Semua warna berganti bersama alih-alih berkedip satu per satu. |
+| Tombol ditekan | Mengecil sedikit, 90ms | Tap langsung terasa, terutama di layar sentuh. |
+
+Yang sengaja tidak dianimasikan: perubahan warna saat hover (berganti seketika), dan pesan riwayat saat percakapan dibuka.

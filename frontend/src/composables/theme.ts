@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { prefersReducedMotion } from '../lib/motion'
 
 export type Theme = 'light' | 'dark'
 
@@ -42,8 +43,14 @@ apply(theme.value)
 export function useTheme() {
   function toggle() {
     theme.value = theme.value === 'dark' ? 'light' : 'dark'
-    apply(theme.value)
     writeStored(theme.value)
+    // A crossfade of the whole page instead of every color snapping at once;
+    // view transitions animate snapshots, so it stays an opacity-only change.
+    if (document.startViewTransition && !prefersReducedMotion()) {
+      document.startViewTransition(() => apply(theme.value))
+    } else {
+      apply(theme.value)
+    }
   }
   return { theme, toggle }
 }

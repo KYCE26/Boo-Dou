@@ -16,6 +16,17 @@
   text-decoration: none;
 }
 
+.button,
+.icon-button {
+  transition: transform 90ms ease-out;
+}
+
+/* A press shrinks the control slightly so a tap registers before any reply. */
+.button:active:not(:disabled),
+.icon-button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.5;

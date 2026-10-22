@@ -26,6 +26,7 @@ onMounted(() => {
       v-else
       id="conversation-drawer"
       class="drawer"
+      motion="drawer"
       :open="ui.drawerOpen"
       labelledby="drawer-title"
       @close="ui.drawerOpen = false"

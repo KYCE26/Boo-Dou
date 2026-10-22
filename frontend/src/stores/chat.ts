@@ -19,6 +19,8 @@ export interface Message {
   // 'streaming' exists only in the browser, while an answer is arriving.
   status: MessageStatus | 'streaming'
   attachments: Attachment[]
+  // Added during this session; only these animate in, not a reloaded history.
+  fresh?: boolean
 }
 
 const HAPPY_MS = 1600
@@ -105,7 +107,7 @@ export const useChatStore = defineStore('chat', () => {
     error.value = null
     celebrating.value = false
 
-    messages.value.push({ localId: nextId++, id: null, role: 'assistant', content: '', status: 'streaming', attachments: [] })
+    messages.value.push({ localId: nextId++, id: null, role: 'assistant', content: '', status: 'streaming', attachments: [], fresh: true })
     // Mutate through the reactive proxy, not the raw object, so the UI updates per token.
     const live = messages.value[messages.value.length - 1]!
     const conversations = useConversationsStore()
@@ -166,7 +168,7 @@ export const useChatStore = defineStore('chat', () => {
       }
     }
 
-    messages.value.push({ localId: nextId++, id: null, role: 'user', content, status: 'complete', attachments })
+    messages.value.push({ localId: nextId++, id: null, role: 'user', content, status: 'complete', attachments, fresh: true })
     void run({ text: content, attachment_ids: attachments.map((a) => a.id) })
     return true
   }
