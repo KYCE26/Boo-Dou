@@ -79,3 +79,11 @@ func lineWith(s, sub string) string {
 	}
 	return ""
 }
+
+func TestPromptMentionsImages(t *testing.T) {
+	p := SystemPrompt("m", fixed)
+	want := "Kamu bisa melihat gambar yang dikirim user di percakapan ini. Jelaskan hanya yang benar-benar\n  terlihat. Kalau ada detail yang kabur atau tidak terbaca, katakan begitu, jangan menebak."
+	if !strings.Contains(p, want) {
+		t.Fatal("aturan gambar tidak ada di persona")
+	}
+}
