@@ -18,7 +18,12 @@ type Config struct {
 	LLMModel   string
 	// Optional, provider-specific note such as "tengah malam WIB".
 	LLMQuotaReset string
-	CORSOrigin    string
+	// LLMVision says whether the model accepts images; the UI hides uploads when false.
+	LLMVision   bool
+	CORSOrigin  string
+	DatabaseURL string
+
+	visionRaw string
 }
 
 // Load reads .env if present; real environment variables win so deployments
@@ -35,6 +40,8 @@ func Load() (*Config, error) {
 		LLMModel:      strings.TrimSpace(os.Getenv("LLM_MODEL")),
 		LLMQuotaReset: strings.TrimSpace(os.Getenv("LLM_QUOTA_RESET")),
 		CORSOrigin:    strings.TrimRight(strings.TrimSpace(os.Getenv("CORS_ORIGIN")), "/"),
+		DatabaseURL:   strings.TrimSpace(os.Getenv("DATABASE_URL")),
+		visionRaw:     strings.TrimSpace(os.Getenv("LLM_VISION")),
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -61,6 +68,18 @@ func (c *Config) validate() error {
 	}
 	if c.CORSOrigin == "" {
 		problems = append(problems, "CORS_ORIGIN wajib diisi")
+	}
+	if c.DatabaseURL == "" {
+		problems = append(problems, "DATABASE_URL wajib diisi")
+	}
+	// Unset means false: sending images to a text-only model fails at the
+	// provider, so vision must be switched on deliberately.
+	if c.visionRaw != "" {
+		v, err := strconv.ParseBool(c.visionRaw)
+		if err != nil {
+			problems = append(problems, "LLM_VISION harus true atau false")
+		}
+		c.LLMVision = v
 	}
 
 	if len(problems) > 0 {

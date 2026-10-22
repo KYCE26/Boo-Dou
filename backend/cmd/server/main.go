@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"boodou/backend/internal/config"
+	"boodou/backend/internal/db"
 	"boodou/backend/internal/handler"
 	"boodou/backend/internal/llm"
 	"boodou/backend/internal/middleware"
@@ -27,6 +28,19 @@ func main() {
 		log.Println("peringatan: LLM_API_KEY kosong, /api/chat akan mengembalikan error sampai diisi")
 	}
 
+	startCtx, cancelStart := context.WithTimeout(context.Background(), 30*time.Second)
+	pool, err := db.Open(startCtx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
+	applied, err := db.Migrate(startCtx, pool)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cancelStart()
+	log.Printf("database %s siap, migrasi baru: %d", db.Describe(pool), len(applied))
+
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery(), middleware.CORS(cfg.CORSOrigin))
 	// No proxy sits in front during dev; trusting none keeps ClientIP honest.
@@ -41,7 +55,7 @@ func main() {
 		QuotaReset: cfg.LLMQuotaReset,
 	})
 	api := router.Group("/api")
-	api.GET("/health", handler.Health(cfg.HasAPIKey()))
+	api.GET("/health", handler.Health(cfg.HasAPIKey(), cfg.LLMVision))
 	api.POST("/chat", handler.NewChat(client, cfg.LLMModel).Handle)
 
 	// WriteTimeout stays unset because it would cut SSE streams; the chat
