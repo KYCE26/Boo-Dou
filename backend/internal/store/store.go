@@ -132,7 +132,7 @@ func (s *Store) Messages(ctx context.Context, conversationID string) ([]Message,
 	rows, err = s.pool.Query(ctx,
 		`SELECT a.message_id, a.id, a.mime, a.width, a.height, a.size_bytes, a.sha256, a.storage_key, a.created_at
 		   FROM attachments a JOIN messages m ON m.id = a.message_id
-		  WHERE m.conversation_id = $1 ORDER BY a.created_at, a.id`, conversationID)
+		  WHERE m.conversation_id = $1 ORDER BY a.position NULLS LAST, a.created_at, a.id`, conversationID)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,8 @@ func (s *Store) AddUserMessage(ctx context.Context, conversationID, text string,
 		m.Attachments = []Attachment{}
 		if len(attachmentIDs) > 0 {
 			rows, err := tx.Query(ctx,
-				`UPDATE attachments SET message_id = $1 WHERE id = ANY($2::uuid[]) AND message_id IS NULL
+				`UPDATE attachments SET message_id = $1, position = array_position($2::uuid[], id)
+				 WHERE id = ANY($2::uuid[]) AND message_id IS NULL
 				 RETURNING id, mime, width, height, size_bytes, sha256, storage_key, created_at`, m.ID, attachmentIDs)
 			if err != nil {
 				return err

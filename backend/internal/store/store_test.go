@@ -53,6 +53,10 @@ func TestConversationLifecycle(t *testing.T) {
 	if len(msgs) != 2 || msgs[0].Role != "user" || len(msgs[0].Attachments) != 2 || msgs[1].Status != "stopped" || msgs[1].Model != "model-x" {
 		t.Fatalf("isi percakapan: %+v", msgs)
 	}
+	// a1 was uploaded first but attached second; history must keep the user's order.
+	if msgs[0].Attachments[0].ID != a2.ID || msgs[0].Attachments[1].ID != a1.ID {
+		t.Fatalf("urutan lampiran di riwayat harus mengikuti urutan kiriman, bukan waktu upload")
+	}
 
 	// A second user message must not overwrite the title.
 	if _, err := s.AddUserMessage(ctx, c.ID, "pertanyaan lain", nil); err != nil {
