@@ -323,6 +323,7 @@ const isLastStreaming = (i: number) => isStreaming.value && i === messages.value
   grid-template-rows: auto minmax(0, 1fr) auto;
   /* An explicit column stops wide content from widening the page past the viewport. */
   grid-template-columns: minmax(0, 1fr);
+  height: 100vh;
   height: 100dvh;
   min-width: 0;
 }
@@ -389,6 +390,9 @@ const isLastStreaming = (i: number) => isStreaming.value && i === messages.value
 }
 
 .conversation {
+  /* Containing block for the visually-hidden labels inside messages; without
+     it they escape this scroller and stretch the page to the list height. */
+  position: relative;
   overflow-y: auto;
   overflow-x: hidden;
   padding-block: var(--space-6) var(--space-7);

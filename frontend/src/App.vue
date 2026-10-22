@@ -53,6 +53,7 @@ onMounted(() => {
 }
 
 .sidebar {
+  height: 100vh;
   height: 100dvh;
   padding: var(--space-4) var(--space-3);
   padding-top: max(var(--space-4), env(safe-area-inset-top));
@@ -66,6 +67,7 @@ onMounted(() => {
   margin: 0;
   width: min(22rem, 88vw);
   max-width: none;
+  height: 100vh;
   height: 100dvh;
   max-height: none;
   border: 0;
