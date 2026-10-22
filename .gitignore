@@ -1,0 +1,36 @@
+# Dependencies and build output
+node_modules/
+dist/
+dev-dist/
+*.tsbuildinfo
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Go binaries and air output
+backend/tmp/
+backend/server
+*.exe
+*.exe~
+*.test
+*.out
+__debug_bin*
+
+# Editors and OS
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Flattened mascot copy used to render PWA icons
+frontend/.icon-build/

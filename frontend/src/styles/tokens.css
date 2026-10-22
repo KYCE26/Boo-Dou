@@ -1,0 +1,98 @@
+/*
+ * vite.config.ts reads --color-brand and --color-bg from the first :root block
+ * for the PWA manifest, so keep those two as plain hex values.
+ * --ghost-eye is left unset in light so the mascot falls back to its outline.
+ * Contrast targets: text 4.5:1 on its background, borders/icons 3:1.
+ */
+:root {
+  color-scheme: light;
+
+  --color-brand: #5b3fd1;
+  --color-bg: #f7f6fb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eeecf6;
+  --color-text: #1c1a29;
+  --color-text-muted: #55526a;
+  --color-border: #7f7a99;
+  --color-accent: #5b3fd1;
+  --color-accent-hover: #4a30b8;
+  --color-on-accent: #ffffff;
+  --color-danger: #b42318;
+  --color-danger-surface: #fdecea;
+  --color-focus: #5b3fd1;
+  --color-code-bg: #ffffff;
+  --color-code-head: #f7f6fb;
+  --color-inline-code-bg: #dedaee;
+
+  --ghost-body: #f6f4ef;
+  --ghost-outline: #26222b;
+  --ghost-hat: #1b191e;
+  --ghost-accent: #2e7a50;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --radius-s: 8px;
+  --radius-m: 14px;
+  --radius-l: 20px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --tap-min: 44px;
+  --content-max: 760px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --color-bg: #15131f;
+    --color-surface: #1e1b2c;
+    --color-surface-muted: #2a2640;
+    --color-text: #ecebf5;
+    --color-text-muted: #aca8c4;
+    --color-border: #807a9e;
+    --color-accent: #a996ff;
+    --color-accent-hover: #c0b3ff;
+    --color-on-accent: #15131f;
+    --color-danger: #ff8a80;
+    --color-danger-surface: #3a1d22;
+    --color-focus: #c0b3ff;
+    --color-code-bg: #15131f;
+    --color-code-head: #1e1b2c;
+    --color-inline-code-bg: #3d3858;
+
+    --ghost-body: #3a3444;
+    --ghost-outline: #ede9f3;
+    --ghost-hat: #0d0c10;
+    --ghost-accent: #2e7a50;
+    --ghost-eye: #ede9f3;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #15131f;
+  --color-surface: #1e1b2c;
+  --color-surface-muted: #2a2640;
+  --color-text: #ecebf5;
+  --color-text-muted: #aca8c4;
+  --color-border: #807a9e;
+  --color-accent: #a996ff;
+  --color-accent-hover: #c0b3ff;
+  --color-on-accent: #15131f;
+  --color-danger: #ff8a80;
+  --color-danger-surface: #3a1d22;
+  --color-focus: #c0b3ff;
+  --color-code-bg: #15131f;
+  --color-code-head: #1e1b2c;
+  --color-inline-code-bg: #3d3858;
+
+  --ghost-body: #3a3444;
+  --ghost-outline: #ede9f3;
+  --ghost-hat: #0d0c10;
+  --ghost-accent: #2e7a50;
+  --ghost-eye: #ede9f3;
+}

@@ -1,0 +1,21 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  # .exe suffix because the project is developed on Windows; drop it on Linux/macOS.
+  cmd = "go build -o ./tmp/server.exe ./cmd/server"
+  entrypoint = ["./tmp/server.exe"]
+  include_ext = ["go"]
+  exclude_dir = ["tmp", "vendor"]
+  exclude_regex = ["_test\\.go"]
+  # OneDrive touches files while syncing; a short delay avoids double rebuilds.
+  delay = 500
+  kill_delay = "1s"
+  send_interrupt = false
+  stop_on_error = true
+
+[log]
+  time = false
+
+[misc]
+  clean_on_exit = true
