@@ -62,7 +62,7 @@ export const copy = {
     } as Record<ErrorKind, string>,
     nextStep: {
       quota: 'Aku sudah menyimpan pesanmu. Kirim ulang setelah batasnya pulih.',
-      key: 'Aku sudah menyimpan pesanmu. Perbarui LLM_API_KEY di backend/.env, jalankan ulang backend, lalu kirim ulang.',
+      key: 'Aku sudah menyimpan pesanmu, jadi cukup kirim ulang setelah kuncinya diperbarui.',
       config: 'Isi LLM_API_KEY di backend/.env, jalankan ulang backend, lalu kirim pesanmu lagi.',
       offline: 'Periksa koneksi internetmu dan pastikan backend berjalan, lalu kirim ulang.',
       provider: 'Kirim ulang beberapa saat lagi. Kalau masih gagal, periksa status provider.',
@@ -74,7 +74,7 @@ export const copy = {
   offline: 'Kamu sedang offline. Percakapan yang sudah terbuka tetap bisa dibaca, dan pesan baru bisa dikirim lagi setelah koneksi kembali.',
   composer: {
     label: 'Pesan untuk Boo Dou',
-    placeholder: 'Tulis pesan untuk Boo Dou',
+    placeholder: 'Tulis pesanmu',
     attach: 'Lampirkan gambar',
     attachLimit: (n: number) => `Sudah ${n} gambar, batas untuk satu pesan`,
     send: 'Kirim',
