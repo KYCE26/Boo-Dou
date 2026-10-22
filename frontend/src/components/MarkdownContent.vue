@@ -135,7 +135,7 @@ onBeforeUnmount(() => cancelAnimationFrame(frame))
 .markdown :deep(blockquote) {
   padding-left: var(--space-3);
   border-left: 3px solid var(--color-green);
-  color: var(--color-text-muted);
+  color: var(--color-muted);
 }
 
 .markdown :deep(a) {
@@ -151,7 +151,7 @@ onBeforeUnmount(() => cancelAnimationFrame(frame))
 }
 
 .markdown :deep(code) {
-  font-family: ui-monospace, "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
   /* Cascadia draws != as a single ≠ glyph; code must show what gets copied. */
   font-variant-ligatures: none;
@@ -161,13 +161,13 @@ onBeforeUnmount(() => cancelAnimationFrame(frame))
 .markdown :deep(:not(pre) > code) {
   padding: 0.1em 0.35em;
   border-radius: 4px;
-  background: var(--color-inline-code-bg);
+  background: var(--color-tea);
 }
 
 .markdown :deep(.code-block) {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-s);
-  background: var(--color-code-bg);
+  background: var(--color-surface);
   overflow: hidden;
 }
 
@@ -178,11 +178,11 @@ onBeforeUnmount(() => cancelAnimationFrame(frame))
   gap: var(--space-2);
   padding-left: var(--space-3);
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-code-head);
+  background: var(--color-bg);
 }
 
 .markdown :deep(.code-lang) {
-  color: var(--color-text-muted);
+  color: var(--color-muted);
   font-size: 0.85rem;
 }
 
@@ -193,13 +193,14 @@ onBeforeUnmount(() => cancelAnimationFrame(frame))
   border: 0;
   border-left: 1px solid var(--color-border);
   background: transparent;
-  color: var(--color-text);
+  color: var(--color-ink);
   font-size: 0.875rem;
   font-weight: 600;
 }
 
-.markdown :deep(.copy-btn:hover) {
-  background: var(--color-surface-muted);
+.markdown :deep(.copy-btn:hover),
+.markdown :deep(.copy-btn:active) {
+  background: var(--color-tea);
 }
 
 .markdown :deep(.copy-btn:focus-visible) {
@@ -247,7 +248,7 @@ onBeforeUnmount(() => cancelAnimationFrame(frame))
 }
 
 .markdown :deep(th) {
-  background: var(--color-code-head);
+  background: var(--color-bg);
   font-weight: 700;
 }
 </style>

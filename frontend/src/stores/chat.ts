@@ -4,6 +4,8 @@ import { ChatError, isAbort, streamConversationChat, type ChatRequest } from '..
 import { getConversation, type Attachment, type MessageStatus } from '../api/conversations'
 import { ApiError } from '../api/http'
 import { useConversationsStore } from './conversations'
+import { copy, type ErrorKind } from '../copy'
+import { errorKind } from '../lib/errors'
 
 export type MascotState = 'idle' | 'thinking' | 'happy' | 'error'
 export type ChatStatus = 'idle' | 'streaming' | 'error'
@@ -20,7 +22,6 @@ export interface Message {
 }
 
 const HAPPY_MS = 1600
-const LAST_FAILED = 'Jawaban terakhir gagal dimuat. Kirim ulang untuk mencoba lagi.'
 
 export const useChatStore = defineStore('chat', () => {
   const conversationId = ref<string | null>(null)
@@ -29,6 +30,7 @@ export const useChatStore = defineStore('chat', () => {
   const loadError = ref<string | null>(null)
   const status = ref<ChatStatus>('idle')
   const error = ref<string | null>(null)
+  const errorType = ref<ErrorKind>('unknown')
   const celebrating = ref(false)
 
   let nextId = 1
@@ -84,7 +86,8 @@ export const useChatStore = defineStore('chat', () => {
       const last = detail.messages.at(-1)
       if (last && (last.role === 'user' || last.status === 'error')) {
         status.value = 'error'
-        error.value = LAST_FAILED
+        error.value = copy.errors.lastFailed
+        errorType.value = 'unknown'
       }
       loadState.value = 'ready'
     } catch (err) {
@@ -106,11 +109,20 @@ export const useChatStore = defineStore('chat', () => {
     // Mutate through the reactive proxy, not the raw object, so the UI updates per token.
     const live = messages.value[messages.value.length - 1]!
     const conversations = useConversationsStore()
+    let titleRefreshed = false
 
     try {
       const result = await streamConversationChat(id, body, {
         signal: controller.signal,
-        onToken: (text) => (live.content += text),
+        onToken: (text) => {
+          live.content += text
+          // The server saves the title with the user message; refresh once so
+          // the list stops showing an untitled conversation mid-answer.
+          if (!titleRefreshed) {
+            titleRefreshed = true
+            void conversations.refresh()
+          }
+        },
       })
       live.id = result.messageId
       live.status = 'complete'
@@ -127,6 +139,7 @@ export const useChatStore = defineStore('chat', () => {
       if (live.content) live.status = 'error'
       else removeMessage(live.localId)
       error.value = err instanceof ChatError ? err.message : 'Terjadi kesalahan yang tidak diketahui.'
+      errorType.value = errorKind(err instanceof ChatError ? err.status : -1, navigator.onLine)
       status.value = 'error'
     } finally {
       controller = null
@@ -148,6 +161,7 @@ export const useChatStore = defineStore('chat', () => {
       } catch (err) {
         status.value = 'error'
         error.value = (err as Error).message
+        errorType.value = errorKind((err as { status?: number }).status ?? 0, navigator.onLine)
         return false
       }
     }
@@ -175,7 +189,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   return {
-    conversationId, messages, loadState, loadError, status, error,
+    conversationId, messages, loadState, loadError, status, error, errorType,
     isStreaming, isEmpty, mascotState, startNew, open, send, retry, stop,
   }
 })

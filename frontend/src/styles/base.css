@@ -4,21 +4,20 @@
   box-sizing: border-box;
 }
 
-html,
-body {
-  margin: 0;
-  /* Long words or URLs in messages must wrap instead of widening the page. */
-  overflow-x: hidden;
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
+  margin: 0;
   min-height: 100dvh;
   background: var(--color-bg);
-  color: var(--color-text);
+  color: var(--color-ink);
   font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: var(--text-m);
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
 }
 
 button,
@@ -30,14 +29,31 @@ textarea {
 
 button {
   cursor: pointer;
+  touch-action: manipulation;
 }
 
+a {
+  color: var(--color-green);
+  text-underline-offset: 3px;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* The ring replaces the browser outline, so focus is never lost (R-32). */
 :focus {
   outline: none;
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-focus);
+  outline: 3px solid var(--color-green);
   outline-offset: 2px;
 }
 
@@ -60,5 +76,6 @@ button {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

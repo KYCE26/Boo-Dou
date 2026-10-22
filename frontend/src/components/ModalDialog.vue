@@ -31,6 +31,8 @@ function onBackdropClick(e: MouseEvent) {
 onBeforeUnmount(() => {
   if (el.value?.open) el.value.close()
 })
+
+defineExpose({ el })
 </script>
 
 <template>
@@ -43,17 +45,19 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .modal {
-  max-width: min(480px, calc(100vw - 32px));
+  max-width: min(30rem, calc(100vw - 2 * var(--gutter)));
   width: 100%;
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-m);
   background: var(--color-surface);
-  color: var(--color-text);
+  color: var(--color-ink);
+  /* The only shadow in the app: a dialog sits above the page and must read as lifted. */
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.22);
 }
 
 .modal::backdrop {
-  background: rgb(10 8 16 / 0.6);
+  background: var(--color-scrim);
 }
 
 .modal-panel {

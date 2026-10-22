@@ -1,6 +1,6 @@
 /*
- * Palette from DESIGN.md: washi paper and sumi ink as neutrals, tea green as
- * the core, vermilion as the single accent (send button only).
+ * Palette and scale from DESIGN.md. Vermilion (--color-accent) belongs to the
+ * send button only; focus and links use green so the accent stays singular.
  * vite.config.ts reads --color-brand and --color-bg from the first :root block
  * for the PWA manifest, so keep those two as plain hex values.
  */
@@ -14,41 +14,57 @@
   --color-muted: #5c584f;
   --color-border: #8c8677;
   --color-green: #3f5a35;
+  --color-green-strong: #2f4428;
   --color-tea: #dce3c6;
   --color-accent: #b3402a;
+  --color-accent-strong: #973522;
   --color-on-accent: #ffffff;
   --color-on-green: #fbf9f3;
-
-  /* Legacy names, mapped onto the new palette until the redesign replaces them. */
-  --color-text: var(--color-ink);
-  --color-text-muted: var(--color-muted);
-  --color-surface-muted: var(--color-tea);
-  --color-accent-hover: #2f4428;
-  --color-danger: var(--color-ink);
-  --color-danger-surface: var(--color-surface);
-  --color-on-danger: var(--color-surface);
-  --color-focus: var(--color-green);
-  --color-code-bg: var(--color-surface);
-  --color-code-head: var(--color-bg);
-  --color-inline-code-bg: var(--color-tea);
+  --color-scrim: rgb(23 22 20 / 0.55);
 
   --ghost-body: #f6f4ef;
   --ghost-outline: #26222b;
   --ghost-hat: #1b191e;
   --ghost-accent: #4f7a3a;
 
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
-  --radius-s: 8px;
-  --radius-m: 14px;
-  --radius-l: 20px;
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, "Liberation Mono", monospace;
+
+  /* Fluid type: phones get the low end without a separate stylesheet. */
+  --text-xs: 0.8125rem;
+  --text-s: 0.875rem;
+  --text-m: 1rem;
+  --text-read: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --text-l: clamp(1.125rem, 1.02rem + 0.45vw, 1.3rem);
+  --text-display: clamp(2.1rem, 1.3rem + 3.6vw, 3.6rem);
+
+  --radius-s: 6px;
+  --radius-m: 12px;
+  --radius-l: 22px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  --space-7: 56px;
   --tap-min: 44px;
-  --content-max: 760px;
+  --content-max: 46rem;
+  --gutter: 14px;
+  --sidebar-width: 18.5rem;
+}
+
+/* Mobile spacing is roughly half of desktop, stepped where the column needs it. */
+@media (min-width: 600px) {
+  :root {
+    --gutter: 24px;
+  }
+}
+
+@media (min-width: 900px) {
+  :root {
+    --gutter: 32px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -61,11 +77,13 @@
     --color-muted: #b4ad9e;
     --color-border: #76705f;
     --color-green: #a3b88e;
+    --color-green-strong: #b9cba6;
     --color-tea: #2d3a28;
     --color-accent: #e07a5f;
+    --color-accent-strong: #ea9178;
     --color-on-accent: #171614;
     --color-on-green: #171614;
-    --color-accent-hover: #b9cba6;
+    --color-scrim: rgb(0 0 0 / 0.65);
 
     --ghost-body: #3a3444;
     --ghost-outline: #ede9f3;
@@ -84,11 +102,13 @@
   --color-muted: #b4ad9e;
   --color-border: #76705f;
   --color-green: #a3b88e;
+  --color-green-strong: #b9cba6;
   --color-tea: #2d3a28;
   --color-accent: #e07a5f;
+  --color-accent-strong: #ea9178;
   --color-on-accent: #171614;
   --color-on-green: #171614;
-  --color-accent-hover: #b9cba6;
+  --color-scrim: rgb(0 0 0 / 0.65);
 
   --ghost-body: #3a3444;
   --ghost-outline: #ede9f3;

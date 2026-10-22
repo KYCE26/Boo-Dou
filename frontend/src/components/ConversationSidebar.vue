@@ -2,18 +2,20 @@
 import { computed, nextTick, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import type { Conversation } from '../api/conversations'
+import { copy } from '../copy'
 import { useChatStore } from '../stores/chat'
 import { useConversationsStore } from '../stores/conversations'
 import ModalDialog from './ModalDialog.vue'
 
+// The drawer has its own heading, so the list heading is kept for screen readers only there.
+const props = withDefaults(defineProps<{ inDrawer?: boolean }>(), { inDrawer: false })
 const emit = defineEmits<{ navigate: [] }>()
 
 const conversations = useConversationsStore()
 const chat = useChatStore()
 const router = useRouter()
 
-const UNTITLED = 'Percakapan tanpa judul'
-const label = (c: Conversation) => c.title || UNTITLED
+const label = (c: Conversation) => c.title || copy.sidebar.untitled
 
 const editingId = ref<string | null>(null)
 const editTitle = ref('')
@@ -56,7 +58,6 @@ async function finishRename(save: boolean) {
     }
     editingId.value = null
     await nextTick()
-    // Return focus to where the keyboard user started.
     listEl.value?.querySelector<HTMLButtonElement>(`[data-rename="${id}"]`)?.focus()
   } catch (err) {
     renameError.value = (err as Error).message
@@ -91,25 +92,29 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <nav class="sidebar-nav" aria-label="Daftar percakapan">
+  <nav class="sidebar-nav" :aria-label="copy.sidebar.nav">
     <button type="button" class="button button-primary new-button" @click="newConversation">
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
       </svg>
-      Percakapan baru
+      {{ copy.sidebar.newChat }}
     </button>
 
-    <p v-if="conversations.state === 'loading' || conversations.state === 'idle'" class="list-note">Memuat percakapan</p>
+    <h2 class="list-title" :class="{ 'visually-hidden': props.inDrawer }">{{ copy.sidebar.title }}</h2>
+
+    <p v-if="conversations.state === 'loading' || conversations.state === 'idle'" class="list-note" role="status">
+      {{ copy.sidebar.loading }}
+    </p>
     <div v-else-if="conversations.state === 'error'" class="list-note list-error" role="alert">
       <p>{{ conversations.error }}</p>
-      <button type="button" class="button button-secondary" @click="conversations.load()">Muat ulang daftar</button>
+      <button type="button" class="button button-quiet" @click="conversations.load()">{{ copy.sidebar.reload }}</button>
     </div>
-    <p v-else-if="conversations.items.length === 0" class="list-note">Belum ada percakapan. Pesan pertamamu akan tersimpan di sini.</p>
+    <p v-else-if="conversations.items.length === 0" class="list-note">{{ copy.sidebar.empty }}</p>
 
     <ul v-else ref="listEl" class="conv-list">
       <li v-for="c in conversations.items" :key="c.id" class="conv-item" :class="{ active: c.id === activeId }">
         <template v-if="editingId === c.id">
-          <label :for="`rename-${c.id}`" class="visually-hidden">Judul percakapan</label>
+          <label :for="`rename-${c.id}`" class="visually-hidden">{{ copy.sidebar.renameLabel }}</label>
           <input
             :id="`rename-${c.id}`"
             ref="renameInput"
@@ -134,22 +139,22 @@ async function confirmDelete() {
           </RouterLink>
           <button
             type="button"
-            class="icon-button plain"
+            class="icon-button bare"
             :data-rename="c.id"
-            :aria-label="`Ganti nama: ${label(c)}`"
+            :aria-label="copy.sidebar.rename(label(c))"
             @click="startRename(c)"
           >
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path d="M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              <path d="M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
             </svg>
           </button>
-          <button type="button" class="icon-button plain" :aria-label="`Hapus: ${label(c)}`" @click="askDelete(c)">
+          <button type="button" class="icon-button bare" :aria-label="copy.sidebar.remove(label(c))" @click="askDelete(c)">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path
                 d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="1.8"
                 stroke-linejoin="round"
                 stroke-linecap="round"
               />
@@ -160,15 +165,13 @@ async function confirmDelete() {
     </ul>
 
     <ModalDialog :open="pendingDelete !== null" labelledby="delete-title" @close="pendingDelete = null">
-      <h2 id="delete-title" class="dialog-title">Hapus percakapan?</h2>
-      <p class="dialog-text">
-        "{{ pendingDelete ? label(pendingDelete) : '' }}" beserta semua pesan dan gambarnya akan dihapus permanen.
-      </p>
+      <h2 id="delete-title" class="dialog-title">{{ copy.deleteDialog.title }}</h2>
+      <p class="dialog-text">{{ pendingDelete ? copy.deleteDialog.body(label(pendingDelete)) : '' }}</p>
       <p v-if="deleteError" class="dialog-error" role="alert">{{ deleteError }}</p>
       <div class="dialog-actions">
         <!-- Cancel takes initial focus so a stray Enter never deletes. -->
-        <button type="button" class="button button-secondary" autofocus @click="pendingDelete = null">Batal</button>
-        <button type="button" class="button button-danger" :disabled="deleting" @click="confirmDelete">Hapus percakapan</button>
+        <button type="button" class="button button-quiet" autofocus @click="pendingDelete = null">{{ copy.deleteDialog.cancel }}</button>
+        <button type="button" class="button button-ink" :disabled="deleting" @click="confirmDelete">{{ copy.deleteDialog.confirm }}</button>
       </div>
     </ModalDialog>
   </nav>
@@ -178,25 +181,33 @@ async function confirmDelete() {
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
   min-height: 0;
   height: 100%;
 }
 
 .new-button {
   justify-content: flex-start;
+  width: 100%;
+}
+
+.list-title {
+  margin: var(--space-5) 0 var(--space-2);
+  padding-left: var(--space-2);
+  font-size: var(--text-s);
+  font-weight: 700;
+  color: var(--color-muted);
 }
 
 .list-note {
   margin: 0;
   padding: var(--space-2);
-  color: var(--color-text-muted);
+  color: var(--color-muted);
 }
 
 .list-error {
   display: grid;
   gap: var(--space-2);
-  color: var(--color-text);
+  color: var(--color-ink);
 }
 
 .list-error p {
@@ -205,9 +216,12 @@ async function confirmDelete() {
 
 .conv-list {
   display: grid;
+  /* Long nowrap titles would otherwise size the track and push the actions out. */
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   gap: 2px;
   margin: 0;
-  padding: 0;
+  padding: 0 0 var(--space-4);
   list-style: none;
   overflow-y: auto;
   min-height: 0;
@@ -217,12 +231,16 @@ async function confirmDelete() {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px;
-  border-radius: var(--radius-s);
+  border-radius: var(--radius-m);
+}
+
+.conv-item:hover,
+.conv-item:active {
+  background: var(--color-bg);
 }
 
 .conv-item.active {
-  background: var(--color-surface-muted);
+  background: var(--color-tea);
 }
 
 .conv-link {
@@ -232,59 +250,66 @@ async function confirmDelete() {
   display: flex;
   align-items: center;
   padding: 0 var(--space-2);
-  border-radius: var(--radius-s);
-  color: var(--color-text);
+  border-radius: var(--radius-m);
+  color: var(--color-ink);
   text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.conv-link:hover {
-  text-decoration: underline;
-}
-
 .conv-item.active .conv-link {
-  font-weight: 600;
+  font-weight: 650;
 }
 
+.conv-item .icon-button {
+  color: var(--color-muted);
+}
+
+.conv-item .icon-button:hover,
+.conv-item .icon-button:active {
+  color: var(--color-ink);
+  background: transparent;
+}
+
+/* Green, not --color-border: the border only reaches 2.74:1 on the tea tint. */
 .rename-input {
   flex: 1;
   min-width: 0;
   min-height: var(--tap-min);
   padding: 0 var(--space-2);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-green);
   border-radius: var(--radius-s);
-  background: var(--color-bg);
+  background: var(--color-surface);
 }
 
 .rename-error {
   flex-basis: 100%;
   margin: 0;
-  padding: 0 var(--space-2);
-  color: var(--color-danger);
-  font-size: 0.875rem;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-s);
 }
 
 .dialog-title {
   margin: 0 0 var(--space-2);
-  font-size: 1.2rem;
+  font-size: var(--text-l);
+  font-weight: 800;
 }
 
 .dialog-text {
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-5);
   overflow-wrap: anywhere;
 }
 
 .dialog-error {
   margin: 0 0 var(--space-3);
-  color: var(--color-danger);
+  font-weight: 650;
 }
 
 .dialog-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 </style>

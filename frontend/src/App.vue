@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import ConversationSidebar from './components/ConversationSidebar.vue'
 import ModalDialog from './components/ModalDialog.vue'
+import { copy } from './copy'
 import { useConversationsStore } from './stores/conversations'
 import { useUiStore } from './stores/ui'
 
@@ -30,14 +31,14 @@ onMounted(() => {
       @close="ui.drawerOpen = false"
     >
       <div class="drawer-head">
-        <h2 id="drawer-title" class="drawer-title">Percakapan</h2>
-        <button type="button" class="icon-button" aria-label="Tutup daftar percakapan" @click="ui.drawerOpen = false">
+        <h2 id="drawer-title" class="drawer-title">{{ copy.sidebar.title }}</h2>
+        <button type="button" class="icon-button bare" :aria-label="copy.sidebar.close" @click="ui.drawerOpen = false">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
         </button>
       </div>
-      <ConversationSidebar @navigate="ui.drawerOpen = false" />
+      <ConversationSidebar in-drawer @navigate="ui.drawerOpen = false" />
     </ModalDialog>
 
     <RouterView />
@@ -47,13 +48,14 @@ onMounted(() => {
 <style scoped>
 .layout.desktop {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
 }
 
 .sidebar {
   height: 100dvh;
-  padding: var(--space-3);
-  border-right: 1px solid var(--color-surface-muted);
+  padding: var(--space-4) var(--space-3);
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+  border-right: 1px solid var(--color-border);
   background: var(--color-surface);
   overflow: hidden;
 }
@@ -61,7 +63,7 @@ onMounted(() => {
 /* The drawer is a modal <dialog> pinned to the left edge. */
 .drawer {
   margin: 0;
-  width: min(320px, 86vw);
+  width: min(22rem, 88vw);
   max-width: none;
   height: 100dvh;
   max-height: none;
@@ -75,6 +77,8 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   padding: var(--space-3);
+  padding-top: max(var(--space-3), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
 }
 
 .drawer-head {
@@ -82,10 +86,13 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-3);
+  padding-left: var(--space-2);
 }
 
 .drawer-title {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--text-l);
+  font-weight: 800;
+  color: var(--color-green);
 }
 </style>

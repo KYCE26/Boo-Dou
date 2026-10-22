@@ -35,6 +35,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Fonts are self-hosted so the PWA keeps its typeface offline; woff2 is not in the default set.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Chat responses are live streams; the service worker must never
         // answer /api with a cached app shell.
         navigateFallbackDenylist: [/^\/api\//],

@@ -9,6 +9,10 @@ export const useUiStore = defineStore('ui', () => {
   // in for a text-only model.
   const vision = ref(false)
   const drawerOpen = ref(false)
+  // Drives the offline notice; the service worker keeps the shell available.
+  const online = ref(navigator.onLine)
+  window.addEventListener('online', () => (online.value = true))
+  window.addEventListener('offline', () => (online.value = false))
 
   const media = window.matchMedia(DESKTOP_QUERY)
   const desktop = ref(media.matches)
@@ -25,5 +29,5 @@ export const useUiStore = defineStore('ui', () => {
     }
   }
 
-  return { vision, drawerOpen, desktop, loadHealth }
+  return { vision, drawerOpen, desktop, online, loadHealth }
 })

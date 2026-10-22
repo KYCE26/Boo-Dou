@@ -1,7 +1,12 @@
+// status is the HTTP status of the chat response, 0 when the server was
+// unreachable; the UI turns it into a cause and a next step.
 export class ChatError extends Error {
-  constructor(message: string) {
+  readonly status: number
+
+  constructor(message: string, status = 0) {
     super(message)
     this.name = 'ChatError'
+    this.status = status
   }
 }
 
@@ -46,7 +51,7 @@ export async function streamConversationChat(
   }
 
   if (!res.body || !res.headers.get('Content-Type')?.includes('text/event-stream')) {
-    throw new ChatError(`Server membalas dengan format yang tidak dikenal (status ${res.status}).`)
+    throw new ChatError(`Server membalas dengan format yang tidak dikenal (status ${res.status}).`, res.status)
   }
 
   for await (const evt of readEvents(res.body)) {
@@ -54,13 +59,13 @@ export async function streamConversationChat(
     if (evt.event === 'token') {
       onToken(payload.content ?? '')
     } else if (evt.event === 'error') {
-      throw new ChatError(payload.message ?? 'Terjadi kesalahan yang tidak diketahui.')
+      throw new ChatError(payload.message ?? 'Terjadi kesalahan yang tidak diketahui.', res.status)
     } else if (evt.event === 'done') {
       return { messageId: payload.message_id ?? null }
     }
   }
 
-  throw new ChatError('Koneksi terputus sebelum jawaban selesai.')
+  throw new ChatError('Koneksi terputus sebelum jawaban selesai.', 502)
 }
 
 export function isAbort(err: unknown): boolean {
