@@ -26,7 +26,7 @@ withDefaults(defineProps<{ variant?: 'line' | 'edge' }>(), { variant: 'line' })
 }
 
 .edge {
-  height: 14px;
+  height: var(--brim-edge);
 }
 
 .stroke {

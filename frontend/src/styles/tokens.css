@@ -52,6 +52,8 @@
   --content-max: 46rem;
   --gutter: 14px;
   --sidebar-width: 18.5rem;
+  /* Height of the brim curve above the composer; the message list reserves it. */
+  --brim-edge: 14px;
 }
 
 /* Mobile spacing is roughly half of desktop, stepped where the column needs it. */

@@ -62,26 +62,51 @@ function onGlobalKeydown(e: KeyboardEvent) {
   chat.stop()
 }
 
-onMounted(() => window.addEventListener('keydown', onGlobalKeydown))
-onBeforeUnmount(() => window.removeEventListener('keydown', onGlobalKeydown))
+// True while the reader sits at the bottom of the list. When the list box or
+// its content changes size (the composer grows, a preview appears, an image
+// loads), a pinned list stays at the bottom so the last line is never hidden.
+let pinned = true
+let resizeObserver: ResizeObserver | null = null
+
+function onListScroll() {
+  const el = listEl.value
+  if (el) pinned = el.scrollHeight - el.scrollTop - el.clientHeight < 120
+}
+
+function keepPinned() {
+  const el = listEl.value
+  if (el && pinned) el.scrollTop = el.scrollHeight
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onGlobalKeydown)
+  const el = listEl.value
+  if (!el) return
+  resizeObserver = new ResizeObserver(keepPinned)
+  resizeObserver.observe(el)
+  if (el.firstElementChild) resizeObserver.observe(el.firstElementChild)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onGlobalKeydown)
+  resizeObserver?.disconnect()
+})
 
 // Only follow new tokens when the reader is already near the bottom, so
 // scrolling up to reread is not yanked back on every token.
 watch(
   () => messages.value.map((m) => m.content.length).join(),
   async () => {
-    const el = listEl.value
-    if (!el) return
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120
     await nextTick()
-    if (nearBottom) el.scrollTop = el.scrollHeight
+    keepPinned()
   },
 )
 
 watch(loadState, async (s) => {
   if (s !== 'ready') return
+  pinned = true
   await nextTick()
-  if (listEl.value) listEl.value.scrollTop = listEl.value.scrollHeight
+  keepPinned()
 })
 
 const THUMB_HEIGHT = 96
@@ -168,7 +193,7 @@ const isLastStreaming = (i: number) => isStreaming.value && i === messages.value
       <BrimEdge class="topbar-edge" />
     </header>
 
-    <main ref="listEl" class="conversation">
+    <main ref="listEl" class="conversation" @scroll.passive="onListScroll">
       <p v-if="!ui.online" class="offline-note" role="status">
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
           <path d="M3 3l18 18M8.5 8.6A6 6 0 0 0 6 13.5 4 4 0 0 0 7 21h10.5M12 6a6 6 0 0 1 5.7 4.1A4.5 4.5 0 0 1 21 17.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -395,7 +420,9 @@ const isLastStreaming = (i: number) => isStreaming.value && i === messages.value
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-block: var(--space-6) var(--space-7);
+  /* The brim curve hangs over the list bottom; keep that much extra room so
+     the last line always sits clear of it. */
+  padding-block: var(--space-6) calc(var(--space-7) + var(--brim-edge));
 }
 
 .offline-note {
