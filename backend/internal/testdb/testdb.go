@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"boodou/backend/internal/db"
@@ -15,6 +16,10 @@ import (
 )
 
 const lockKey = 7_420_011
+
+// opened makes Open idempotent within one test: a second call would block on
+// the advisory lock this test already holds, and would wipe its data.
+var opened sync.Map // testing.TB -> *pgxpool.Pool
 
 // URL reads DATABASE_URL_TEST from the environment, falling back to
 // backend/.env so `go test ./...` works without exporting anything.
@@ -46,6 +51,9 @@ func URL() string {
 // database whose name does not end in _test, because every call wipes it.
 func Open(t testing.TB) *pgxpool.Pool {
 	t.Helper()
+	if p, ok := opened.Load(t); ok {
+		return p.(*pgxpool.Pool)
+	}
 	url := URL()
 	if url == "" {
 		t.Skip("DATABASE_URL_TEST kosong: tes database dilewati. Isi di backend/.env atau environment.")
@@ -82,5 +90,7 @@ func Open(t testing.TB) *pgxpool.Pool {
 	if _, err := pool.Exec(ctx, `TRUNCATE conversations, messages, attachments CASCADE`); err != nil {
 		t.Fatalf("kosongkan database tes: %v", err)
 	}
+	opened.Store(t, pool)
+	t.Cleanup(func() { opened.Delete(t) })
 	return pool
 }

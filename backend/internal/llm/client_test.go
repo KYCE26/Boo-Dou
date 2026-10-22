@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -116,5 +117,23 @@ func TestRateLimitMessages(t *testing.T) {
 		if got := c.rateLimitMessage(tc.retryAfter, tc.body); !strings.Contains(strings.ToLower(got), strings.ToLower(tc.want)) {
 			t.Errorf("%s: got %q, want it to contain %q", tc.name, got, tc.want)
 		}
+	}
+}
+
+func TestMessageJSON(t *testing.T) {
+	text, _ := json.Marshal(Message{Role: "user", Content: "halo"})
+	if string(text) != `{"role":"user","content":"halo"}` {
+		t.Fatalf("pesan teks harus tetap string: %s", text)
+	}
+
+	withImg, _ := json.Marshal(Message{Role: "user", Content: "apa ini?", Images: []Image{{MIME: "image/jpeg", Data: []byte{1, 2, 3}}}})
+	want := `{"role":"user","content":[{"type":"text","text":"apa ini?"},{"type":"image_url","image_url":{"url":"data:image/jpeg;base64,AQID"}}]}`
+	if string(withImg) != want {
+		t.Fatalf("got  %s\nwant %s", withImg, want)
+	}
+
+	onlyImg, _ := json.Marshal(Message{Role: "user", Images: []Image{{MIME: "image/png", Data: []byte{1}}}})
+	if strings.Contains(string(onlyImg), `"type":"text"`) {
+		t.Fatalf("teks kosong tidak boleh dikirim sebagai part: %s", onlyImg)
 	}
 }

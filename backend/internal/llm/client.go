@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,17 +17,60 @@ import (
 )
 
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string  `json:"role"`
+	Content string  `json:"content"`
+	Images  []Image `json:"-"`
+}
+
+// Image is sent inline as a data URL; the bytes never touch logs.
+type Image struct {
+	MIME string
+	Data []byte
+}
+
+type contentPart struct {
+	Type     string    `json:"type"`
+	Text     string    `json:"text,omitempty"`
+	ImageURL *imageURL `json:"image_url,omitempty"`
+}
+
+type imageURL struct {
+	URL string `json:"url"`
+}
+
+// MarshalJSON keeps plain string content for text-only messages, which every
+// OpenAI-compatible provider accepts, and switches to the content-part array
+// only when images are attached.
+func (m Message) MarshalJSON() ([]byte, error) {
+	if len(m.Images) == 0 {
+		return json.Marshal(struct {
+			Role    string `json:"role"`
+			Content string `json:"content"`
+		}{m.Role, m.Content})
+	}
+	parts := make([]contentPart, 0, len(m.Images)+1)
+	if m.Content != "" {
+		parts = append(parts, contentPart{Type: "text", Text: m.Content})
+	}
+	for _, img := range m.Images {
+		url := "data:" + img.MIME + ";base64," + base64.StdEncoding.EncodeToString(img.Data)
+		parts = append(parts, contentPart{Type: "image_url", ImageURL: &imageURL{URL: url}})
+	}
+	return json.Marshal(struct {
+		Role    string        `json:"role"`
+		Content []contentPart `json:"content"`
+	}{m.Role, parts})
 }
 
 var ErrNoAPIKey = errors.New("LLM_API_KEY belum diisi")
 
 // APIError carries a provider failure without the raw body, so callers can
-// show Message to users without leaking provider internals.
+// show Message to users without leaking provider internals. ProviderStatus
+// keeps the original code so callers can explain, say, a rejected image.
 type APIError struct {
-	Status  int
-	Message string
+	Status         int
+	ProviderStatus int
+	Message        string
 }
 
 func (e *APIError) Error() string { return e.Message }
@@ -155,6 +199,12 @@ func (c *Client) StreamChat(ctx context.Context, messages []Message, onDelta fun
 }
 
 func (c *Client) statusError(status int, retryAfter, body string) *APIError {
+	e := c.statusMessage(status, retryAfter, body)
+	e.ProviderStatus = status
+	return e
+}
+
+func (c *Client) statusMessage(status int, retryAfter, body string) *APIError {
 	switch status {
 	case http.StatusUnauthorized, http.StatusForbidden:
 		return &APIError{Status: status, Message: "API key ditolak provider: key salah atau sudah kedaluwarsa. Buat key baru, isi ke LLM_API_KEY di backend/.env, lalu jalankan ulang backend."}
@@ -217,4 +267,10 @@ func classifyTransportError(ctx context.Context, err error) error {
 		return &APIError{Status: http.StatusGatewayTimeout, Message: "Provider tidak merespons tepat waktu. Coba lagi."}
 	}
 	return &APIError{Status: http.StatusBadGateway, Message: "Tidak bisa terhubung ke provider. Periksa LLM_BASE_URL dan koneksi internet."}
+}
+
+// Configured lets callers refuse a request before saving anything when no
+// key is set, instead of storing a user message that can never be answered.
+func (c *Client) Configured() bool {
+	return c.apiKey != ""
 }

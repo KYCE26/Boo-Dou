@@ -15,6 +15,8 @@ import (
 	"boodou/backend/internal/handler"
 	"boodou/backend/internal/llm"
 	"boodou/backend/internal/middleware"
+	"boodou/backend/internal/storage"
+	"boodou/backend/internal/store"
 
 	"github.com/gin-gonic/gin"
 )
@@ -41,6 +43,19 @@ func main() {
 	cancelStart()
 	log.Printf("database %s siap, migrasi baru: %d", db.Describe(pool), len(applied))
 
+	files, err := storage.NewLocal(cfg.UploadDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	st := store.New(pool)
+	cleanCtx, cancelClean := context.WithTimeout(context.Background(), 30*time.Second)
+	if n, err := handler.CleanupOrphans(cleanCtx, st, files); err != nil {
+		log.Printf("peringatan: bersihkan lampiran yatim gagal: %v", err)
+	} else if n > 0 {
+		log.Printf("%d lampiran yang tidak terpakai lebih dari 24 jam dihapus", n)
+	}
+	cancelClean()
+
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery(), middleware.CORS(cfg.CORSOrigin))
 	// No proxy sits in front during dev; trusting none keeps ClientIP honest.
@@ -57,6 +72,18 @@ func main() {
 	api := router.Group("/api")
 	api.GET("/health", handler.Health(cfg.HasAPIKey(), cfg.LLMVision))
 	api.POST("/chat", handler.NewChat(client, cfg.LLMModel).Handle)
+
+	convs := handler.NewConversations(st, files)
+	api.GET("/conversations", convs.List)
+	api.POST("/conversations", convs.Create)
+	api.GET("/conversations/:id", convs.Get)
+	api.PATCH("/conversations/:id", convs.Rename)
+	api.DELETE("/conversations/:id", convs.Delete)
+	api.POST("/conversations/:id/chat", handler.NewConversationChat(st, files, client, cfg.LLMModel, cfg.LLMVision).Handle)
+
+	atts := handler.NewAttachments(st, files, cfg.LLMVision)
+	api.POST("/attachments", atts.Upload)
+	api.GET("/attachments/:id", atts.Serve)
 
 	// WriteTimeout stays unset because it would cut SSE streams; the chat
 	// handler bounds its own duration instead.

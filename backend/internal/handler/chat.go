@@ -140,8 +140,13 @@ func (s *sseWriter) token(content string) error {
 }
 
 func (s *sseWriter) done() {
+	s.finish(gin.H{})
+}
+
+// finish ends a successful stream; the payload tells the client what was saved.
+func (s *sseWriter) finish(payload any) {
 	s.begin(http.StatusOK)
-	_ = s.send("done", gin.H{})
+	_ = s.send("done", payload)
 }
 
 func (s *sseWriter) fail(status int, message string) {
