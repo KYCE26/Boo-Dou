@@ -1,18 +1,28 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import ChatComposer from '../components/ChatComposer.vue'
 import GhostMascot from '../components/GhostMascot.vue'
+import ImageViewer from '../components/ImageViewer.vue'
 import MarkdownContent from '../components/MarkdownContent.vue'
+import { attachmentUrl, type Attachment } from '../api/conversations'
 import { useChatStore } from '../stores/chat'
+import { useUiStore } from '../stores/ui'
 import { useTheme } from '../composables/theme'
 
 const chat = useChatStore()
-const { messages, error, isStreaming, isEmpty, mascotState, status } = storeToRefs(chat)
+const ui = useUiStore()
+const route = useRoute()
+const router = useRouter()
+const { messages, error, isStreaming, isEmpty, mascotState, status, loadState, loadError } = storeToRefs(chat)
 const { theme, toggle: toggleTheme } = useTheme()
 
-const draft = ref('')
 const listEl = ref<HTMLElement | null>(null)
-const inputEl = ref<HTMLTextAreaElement | null>(null)
+const composer = ref<InstanceType<typeof ChatComposer> | null>(null)
+const viewing = ref<{ image: Attachment; label: string } | null>(null)
+const dragging = ref(false)
+let dragDepth = 0
 
 const statusText: Record<string, string> = {
   thinking: 'Boo Dou sedang menyusun jawaban',
@@ -21,44 +31,41 @@ const statusText: Record<string, string> = {
   idle: 'Siap menerima pertanyaan',
 }
 
-async function submit() {
-  const text = draft.value
-  if (!text.trim() || isStreaming.value) return
-  draft.value = ''
-  // v-model writes the empty value on the next tick; measuring earlier would
-  // keep the old height.
-  await nextTick()
-  resizeInput()
-  await chat.send(text)
-  inputEl.value?.focus()
+const routeId = computed(() => (typeof route.params.id === 'string' ? route.params.id : null))
+
+watch(
+  routeId,
+  (id) => {
+    if (id) void chat.open(id)
+    else chat.startNew()
+  },
+  { immediate: true },
+)
+
+// A conversation created by the first message moves the URL from "/" to
+// /c/:id without reloading what is already on screen.
+watch(
+  () => chat.conversationId,
+  (id) => {
+    if (id && routeId.value !== id) void router.replace(`/c/${id}`)
+  },
+)
+
+function sendMessage(text: string, attachments: Attachment[]) {
+  return chat.send(text, attachments)
 }
 
-function onKeydown(e: KeyboardEvent) {
-  // Enter sends, Shift+Enter adds a line; IME composition must not send early.
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-    e.preventDefault()
-    submit()
-  }
-}
-
-// Escape stops a running answer from anywhere on the page, matching the
-// Hentikan button for keyboard users.
+// Escape stops a running answer, matching the Hentikan button, unless a
+// dialog or an inline editor has already claimed the key.
 function onGlobalKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && isStreaming.value) {
-    e.preventDefault()
-    chat.stop()
-  }
+  if (e.key !== 'Escape' || !isStreaming.value || e.defaultPrevented) return
+  if (document.querySelector('dialog[open]')) return
+  e.preventDefault()
+  chat.stop()
 }
 
 onMounted(() => window.addEventListener('keydown', onGlobalKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onGlobalKeydown))
-
-function resizeInput() {
-  const el = inputEl.value
-  if (!el) return
-  el.style.height = 'auto'
-  el.style.height = `${Math.min(el.scrollHeight, 200)}px`
-}
 
 // Only follow new tokens when the reader is already near the bottom, so
 // scrolling up to reread is not yanked back on every token.
@@ -72,12 +79,65 @@ watch(
     if (nearBottom) el.scrollTop = el.scrollHeight
   },
 )
+
+watch(loadState, async (s) => {
+  if (s !== 'ready') return
+  await nextTick()
+  if (listEl.value) listEl.value.scrollTop = listEl.value.scrollHeight
+})
+
+const THUMB_HEIGHT = 96
+const thumbWidth = (a: Attachment) => Math.min(160, Math.max(48, Math.round((a.width / a.height) * THUMB_HEIGHT)))
+
+function openViewer(image: Attachment, index: number, total: number) {
+  viewing.value = { image, label: total > 1 ? `Gambar ${index + 1} dari ${total}` : 'Gambar lampiran' }
+}
+
+const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files')
+
+function onDragEnter(e: DragEvent) {
+  if (!ui.vision || !hasFiles(e)) return
+  dragDepth++
+  dragging.value = true
+}
+
+function onDragLeave() {
+  if (!dragging.value) return
+  dragDepth = Math.max(0, dragDepth - 1)
+  if (dragDepth === 0) dragging.value = false
+}
+
+function onDrop(e: DragEvent) {
+  dragDepth = 0
+  dragging.value = false
+  if (!ui.vision) return
+  composer.value?.addFiles(Array.from(e.dataTransfer?.files ?? []))
+}
 </script>
 
 <template>
-  <div class="page">
+  <div
+    class="page"
+    @dragenter.prevent="onDragEnter"
+    @dragover.prevent
+    @dragleave="onDragLeave"
+    @drop.prevent="onDrop"
+  >
     <header class="topbar">
       <div class="brand">
+        <button
+          v-if="!ui.desktop"
+          type="button"
+          class="icon-button plain"
+          aria-label="Buka daftar percakapan"
+          aria-controls="conversation-drawer"
+          :aria-expanded="ui.drawerOpen"
+          @click="ui.drawerOpen = true"
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
         <GhostMascot :state="mascotState" :size="40" />
         <h1 class="brand-name">Boo Dou</h1>
       </div>
@@ -98,42 +158,69 @@ watch(
           />
         </svg>
         <svg v-else viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-          <path
-            d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linejoin="round"
-          />
+          <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
         </svg>
       </button>
     </header>
 
     <main ref="listEl" class="conversation">
       <div class="column">
-        <section v-if="isEmpty" class="empty">
+        <section v-if="loadState === 'loading'" class="state">
+          <GhostMascot state="thinking" :size="96" />
+          <p>Memuat percakapan</p>
+        </section>
+
+        <section v-else-if="loadState === 'notfound'" class="state" role="alert">
+          <GhostMascot state="error" :size="96" />
+          <h2>Percakapan tidak ditemukan</h2>
+          <p>Mungkin sudah dihapus.</p>
+          <RouterLink to="/" class="button button-primary">Mulai percakapan baru</RouterLink>
+        </section>
+
+        <section v-else-if="loadState === 'error'" class="state" role="alert">
+          <GhostMascot state="error" :size="96" />
+          <h2>Percakapan gagal dimuat</h2>
+          <p>{{ loadError }}</p>
+          <button v-if="routeId" type="button" class="button button-secondary" @click="chat.open(routeId)">Muat ulang percakapan</button>
+        </section>
+
+        <section v-else-if="isEmpty" class="state">
           <GhostMascot :state="mascotState" :size="140" />
           <h2>Halo, saya Boo Dou</h2>
-          <p>Tulis pertanyaan di kolom bawah, lalu tekan Kirim atau Enter.</p>
+          <p v-if="ui.vision">Tulis pertanyaan atau lampirkan gambar, lalu tekan Kirim atau Enter.</p>
+          <p v-else>Tulis pertanyaan di kolom bawah, lalu tekan Kirim atau Enter.</p>
         </section>
 
         <ol v-else class="messages" aria-label="Percakapan">
           <li
             v-for="msg in messages"
-            :key="msg.id"
+            :key="msg.localId"
             class="message"
             :class="msg.role === 'user' ? 'from-user' : 'from-assistant'"
           >
             <span class="visually-hidden">{{ msg.role === 'user' ? 'Anda:' : 'Boo Dou:' }}</span>
-            <p v-if="msg.role === 'user'" class="bubble">{{ msg.content }}</p>
-            <div v-else-if="msg.content" class="bubble markdown-bubble">
+            <div v-if="msg.attachments.length" class="thumbs">
+              <button
+                v-for="(a, i) in msg.attachments"
+                :key="a.id"
+                type="button"
+                class="thumb"
+                :aria-label="`Lihat gambar ${i + 1} ukuran penuh`"
+                @click="openViewer(a, i, msg.attachments.length)"
+              >
+                <img :src="attachmentUrl(a.id)" :width="thumbWidth(a)" :height="THUMB_HEIGHT" alt="" loading="lazy" />
+              </button>
+            </div>
+            <p v-if="msg.role === 'user' && msg.content" class="bubble">{{ msg.content }}</p>
+            <div v-else-if="msg.role === 'assistant' && msg.content" class="bubble markdown-bubble">
               <MarkdownContent :source="msg.content" />
             </div>
-            <p v-else class="bubble pending">
+            <p v-else-if="msg.role === 'assistant'" class="bubble pending">
               <span class="dot" /><span class="dot" /><span class="dot" />
               <span class="visually-hidden">Menunggu jawaban</span>
             </p>
-            <p v-if="msg.stopped" class="stopped-label">Dihentikan</p>
+            <p v-if="msg.status === 'stopped'" class="status-label">Dihentikan</p>
+            <p v-else-if="msg.role === 'assistant' && msg.status === 'error'" class="status-label">Terputus karena error</p>
           </li>
         </ol>
 
@@ -142,7 +229,9 @@ watch(
           <div class="error-body">
             <p class="error-title">Jawaban gagal dimuat</p>
             <p class="error-message">{{ error }}</p>
-            <button type="button" class="button button-secondary" @click="chat.retry()">Kirim ulang pesan terakhir</button>
+            <button v-if="chat.conversationId" type="button" class="button button-secondary" @click="chat.retry()">
+              Kirim ulang pesan terakhir
+            </button>
           </div>
         </div>
       </div>
@@ -150,41 +239,30 @@ watch(
 
     <p class="visually-hidden" aria-live="polite">{{ statusText[mascotState] }}</p>
 
-    <form class="composer" @submit.prevent="submit">
-      <div class="column composer-row">
-        <label for="chat-input" class="visually-hidden">Pesan untuk Boo Dou</label>
-        <textarea
-          id="chat-input"
-          ref="inputEl"
-          v-model="draft"
-          rows="1"
-          placeholder="Tulis pesan"
-          autocomplete="off"
-          @input="resizeInput"
-          @keydown="onKeydown"
-        />
-        <button v-if="isStreaming" type="button" class="button button-secondary" aria-keyshortcuts="Escape" @click="chat.stop()">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
-          </svg>
-          Hentikan
-        </button>
-        <button v-else type="submit" class="button button-primary" :disabled="!draft.trim()">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path d="M4 12 20 4l-5 16-3-7-8-1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-          </svg>
-          Kirim
-        </button>
-      </div>
-    </form>
+    <ChatComposer
+      ref="composer"
+      :vision="ui.vision"
+      :streaming="isStreaming"
+      :send="sendMessage"
+      :key="routeId ?? 'new'"
+      @stop="chat.stop()"
+    />
+
+    <div v-if="dragging" class="drop-overlay" aria-hidden="true">
+      <p>Lepaskan gambar untuk melampirkan</p>
+    </div>
+
+    <ImageViewer :image="viewing?.image ?? null" :label="viewing?.label ?? ''" @close="viewing = null" />
   </div>
 </template>
 
 <style scoped>
 .page {
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr auto;
   height: 100dvh;
+  min-width: 0;
 }
 
 .column {
@@ -217,28 +295,13 @@ watch(
   font-weight: 700;
 }
 
-.icon-button {
-  display: inline-grid;
-  place-items: center;
-  width: var(--tap-min);
-  height: var(--tap-min);
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--color-text);
-}
-
-.icon-button:hover {
-  background: var(--color-surface-muted);
-}
-
 .conversation {
   overflow-y: auto;
   overflow-x: hidden;
   padding-block: var(--space-5);
 }
 
-.empty {
+.state {
   display: grid;
   justify-items: center;
   gap: var(--space-2);
@@ -246,15 +309,21 @@ watch(
   text-align: center;
 }
 
-.empty h2 {
+.state h2 {
   margin: var(--space-3) 0 0;
   font-size: 1.5rem;
 }
 
-.empty p {
+.state p {
   margin: 0;
-  max-width: 34ch;
+  max-width: 36ch;
   color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.state .button {
+  margin-top: var(--space-2);
+  text-decoration: none;
 }
 
 .messages {
@@ -269,6 +338,7 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -276,8 +346,33 @@ watch(
   align-items: flex-end;
 }
 
-.stopped-label {
-  margin: var(--space-1) 0 0 var(--space-2);
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  max-width: 100%;
+}
+
+.thumb {
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-m);
+  background: var(--color-surface-muted);
+  overflow: hidden;
+  line-height: 0;
+}
+
+.thumb img {
+  display: block;
+  height: 96px;
+  width: auto;
+  max-width: 160px;
+  object-fit: cover;
+}
+
+.status-label {
+  margin: 0 0 0 var(--space-2);
   color: var(--color-text-muted);
   font-size: 0.875rem;
 }
@@ -374,75 +469,23 @@ watch(
 
 .error-body .button {
   justify-self: start;
+  white-space: normal;
 }
 
-.composer {
-  padding-block: var(--space-3);
-  padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-surface-muted);
-  background: var(--color-surface);
+.drop-overlay {
+  position: absolute;
+  inset: var(--space-2);
+  display: grid;
+  place-items: center;
+  border: 3px dashed var(--color-accent);
+  border-radius: var(--radius-l);
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  pointer-events: none;
 }
 
-.composer-row {
-  display: flex;
-  gap: var(--space-2);
-  align-items: flex-end;
-}
-
-textarea {
-  flex: 1;
-  min-width: 0;
-  min-height: var(--tap-min);
-  max-height: 200px;
-  padding: 10px var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-m);
-  background: var(--color-bg);
-  resize: none;
-  line-height: 1.5;
-}
-
-textarea::placeholder {
-  color: var(--color-text-muted);
-  opacity: 1;
-}
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-width: var(--tap-min);
-  min-height: var(--tap-min);
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-m);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.button-primary {
-  border: 1px solid var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-}
-
-.button-primary:hover:not(:disabled) {
-  background: var(--color-accent-hover);
-  border-color: var(--color-accent-hover);
-}
-
-.button-primary:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.button-secondary {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-
-.button-secondary:hover {
-  background: var(--color-surface-muted);
+.drop-overlay p {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
 }
 </style>

@@ -1,15 +1,18 @@
-export type Role = 'user' | 'assistant' | 'system'
-
-export interface ChatMessage {
-  role: Role
-  content: string
-}
-
 export class ChatError extends Error {
   constructor(message: string) {
     super(message)
     this.name = 'ChatError'
   }
+}
+
+export interface ChatRequest {
+  text?: string
+  attachment_ids?: string[]
+  retry?: boolean
+}
+
+export interface ChatResult {
+  messageId: string | null
 }
 
 interface StreamOptions {
@@ -24,13 +27,17 @@ interface SseEvent {
 
 // The backend sends every outcome, including validation errors, as SSE, so
 // the body is parsed even when the status is not 2xx.
-export async function streamChat(messages: ChatMessage[], { signal, onToken }: StreamOptions): Promise<void> {
+export async function streamConversationChat(
+  conversationId: string,
+  body: ChatRequest,
+  { signal, onToken }: StreamOptions,
+): Promise<ChatResult> {
   let res: Response
   try {
-    res = await fetch('/api/chat', {
+    res = await fetch(`/api/conversations/${encodeURIComponent(conversationId)}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify(body),
       signal,
     })
   } catch (err) {
@@ -43,12 +50,13 @@ export async function streamChat(messages: ChatMessage[], { signal, onToken }: S
   }
 
   for await (const evt of readEvents(res.body)) {
+    const payload = parsePayload(evt.data)
     if (evt.event === 'token') {
-      onToken(parsePayload(evt.data).content ?? '')
+      onToken(payload.content ?? '')
     } else if (evt.event === 'error') {
-      throw new ChatError(parsePayload(evt.data).message ?? 'Terjadi kesalahan yang tidak diketahui.')
+      throw new ChatError(payload.message ?? 'Terjadi kesalahan yang tidak diketahui.')
     } else if (evt.event === 'done') {
-      return
+      return { messageId: payload.message_id ?? null }
     }
   }
 
@@ -59,7 +67,7 @@ export function isAbort(err: unknown): boolean {
   return err instanceof DOMException && err.name === 'AbortError'
 }
 
-function parsePayload(data: string): { content?: string; message?: string } {
+function parsePayload(data: string): { content?: string; message?: string; message_id?: string } {
   try {
     return JSON.parse(data)
   } catch {

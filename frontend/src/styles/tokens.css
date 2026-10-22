@@ -19,6 +19,7 @@
   --color-on-accent: #ffffff;
   --color-danger: #b42318;
   --color-danger-surface: #fdecea;
+  --color-on-danger: #ffffff;
   --color-focus: #5b3fd1;
   --color-code-bg: #ffffff;
   --color-code-head: #f7f6fb;
@@ -58,6 +59,7 @@
     --color-on-accent: #15131f;
     --color-danger: #ff8a80;
     --color-danger-surface: #3a1d22;
+    --color-on-danger: #15131f;
     --color-focus: #c0b3ff;
     --color-code-bg: #15131f;
     --color-code-head: #1e1b2c;
@@ -85,6 +87,7 @@
   --color-on-accent: #15131f;
   --color-danger: #ff8a80;
   --color-danger-surface: #3a1d22;
+  --color-on-danger: #15131f;
   --color-focus: #c0b3ff;
   --color-code-bg: #15131f;
   --color-code-head: #1e1b2c;

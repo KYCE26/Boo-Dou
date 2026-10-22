@@ -14,7 +14,7 @@ Pastikan `C:\Program Files\Go\bin`, `C:\Program Files\nodejs`, dan `%USERPROFILE
 
 ```bash
 cd backend
-cp .env.example .env      # lalu isi LLM_API_KEY
+cp .env.example .env      # lalu isi LLM_API_KEY dan DATABASE_URL
 go mod download
 
 cd ../frontend
@@ -42,16 +42,28 @@ Di VS Code, jalankan task `dev: semua` (Terminal > Run Task) atau konfigurasi de
 
 | Method | Path | Keterangan |
 |---|---|---|
-| GET | `/api/health` | Status server dan apakah API key sudah diisi |
-| POST | `/api/chat` | Body `{"messages":[{"role":"user","content":"..."}]}`, balasan SSE |
+| GET | `/api/health` | Status, apakah API key terisi, dan `llm_vision` |
+| GET, POST | `/api/conversations` | Daftar (terbaru dulu) dan buat percakapan |
+| GET, PATCH, DELETE | `/api/conversations/:id` | Isi beserta pesan dan lampiran, ganti judul, hapus (file gambar ikut terhapus) |
+| POST | `/api/conversations/:id/chat` | Body `{"text":"...","attachment_ids":[]}` atau `{"retry":true}`, balasan SSE |
+| POST | `/api/attachments` | Multipart field `file`: JPEG/PNG/WebP, maks 5 MB |
+| GET | `/api/attachments/:id` | File gambar |
 
-Event SSE dari `/api/chat`: `token` (`{"content":"..."}`), `done`, dan `error` (`{"message":"..."}`).
+Event SSE dari endpoint chat: `token` (`{"content":"..."}`), `done` (`{"message_id":"..."}`), dan `error` (`{"message":"..."}`).
+
+## Database
+
+PostgreSQL dari `DATABASE_URL`. Migrasi di `backend/internal/db/migrations` jalan otomatis saat backend start. `go test` memakai `DATABASE_URL_TEST`, yang dikosongkan setiap tes jalan, jadi nama databasenya wajib berakhiran `_test`. Kalau variabel itu kosong, tes database dilewati.
+
+Gambar disimpan di `UPLOAD_DIR` (default `backend/data/uploads`, tidak masuk git). Frontend mengompres gambar ke sisi terpanjang 1568 px sebelum upload, yang sekaligus membuang EXIF termasuk lokasi GPS.
+
+Set `LLM_VISION=true` hanya kalau `LLM_MODEL` bisa membaca gambar.
 
 ## Cek sebelum commit
 
 ```bash
 cd backend && go vet ./... && go test ./... && go build ./...
-cd frontend && npm run build
+cd frontend && npm run build && npm test
 ```
 
 ## Ikon PWA

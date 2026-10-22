@@ -71,7 +71,6 @@ func main() {
 	})
 	api := router.Group("/api")
 	api.GET("/health", handler.Health(cfg.HasAPIKey(), cfg.LLMVision))
-	api.POST("/chat", handler.NewChat(client, cfg.LLMModel).Handle)
 
 	convs := handler.NewConversations(st, files)
 	api.GET("/conversations", convs.List)
