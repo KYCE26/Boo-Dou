@@ -40,3 +40,6 @@ backend/data/
 
 # Gambar referensi desain (berhak cipta, tidak boleh masuk repo)
 design-ref/
+
+# Instruksi lokal asisten, tidak ikut repo
+CLAUDE.md
