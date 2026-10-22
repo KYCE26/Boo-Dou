@@ -239,7 +239,7 @@ defineExpose({ addFiles, focus: () => inputEl.value?.focus() })
           </svg>
           Hentikan
         </button>
-        <button v-else type="submit" class="button button-primary" :disabled="!canSend">
+        <button v-else type="submit" class="button button-send" :disabled="!canSend">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path d="M4 12 20 4l-5 16-3-7-8-1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
           </svg>
@@ -318,7 +318,7 @@ defineExpose({ addFiles, focus: () => inputEl.value?.focus() })
   bottom: 4px;
   width: calc(100% - 8px);
   height: 6px;
-  accent-color: var(--color-accent);
+  accent-color: var(--color-green);
 }
 
 /* 44px hit area around a small visual badge, overlapping the corner. */

@@ -387,8 +387,8 @@ function onDrop(e: DragEvent) {
 }
 
 .from-user .bubble {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
+  background: var(--color-tea);
+  color: var(--color-ink);
   border-bottom-right-radius: var(--radius-s);
 }
 
@@ -477,7 +477,7 @@ function onDrop(e: DragEvent) {
   inset: var(--space-2);
   display: grid;
   place-items: center;
-  border: 3px dashed var(--color-accent);
+  border: 3px dashed var(--color-green);
   border-radius: var(--radius-l);
   background: color-mix(in srgb, var(--color-bg) 88%, transparent);
   pointer-events: none;

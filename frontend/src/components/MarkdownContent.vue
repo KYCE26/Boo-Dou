@@ -134,12 +134,12 @@ onBeforeUnmount(() => cancelAnimationFrame(frame))
 
 .markdown :deep(blockquote) {
   padding-left: var(--space-3);
-  border-left: 3px solid var(--color-accent);
+  border-left: 3px solid var(--color-green);
   color: var(--color-text-muted);
 }
 
 .markdown :deep(a) {
-  color: var(--color-accent);
+  color: var(--color-green);
   text-decoration: underline;
   text-underline-offset: 2px;
 }

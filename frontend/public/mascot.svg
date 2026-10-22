@@ -5,7 +5,7 @@
       --_body: var(--ghost-body, #F6F4EF);
       --_line: var(--ghost-outline, #26222B);
       --_hat: var(--ghost-hat, #1B191E);
-      --_accent: var(--ghost-accent, #2E7A50);
+      --_accent: var(--ghost-accent, #4F7A3A);
       --_eye: var(--ghost-eye, var(--_line));
       overflow: visible;
     }

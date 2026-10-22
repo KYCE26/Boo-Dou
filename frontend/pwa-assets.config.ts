@@ -2,7 +2,7 @@ import { defineConfig, minimal2023Preset } from '@vite-pwa/assets-generator/conf
 
 // Maskable and Apple icons are shown on an opaque tile, so give them the app
 // background instead of black; transparent icons keep the ghost's own shape.
-const tile = { background: '#f7f6fb', fit: 'contain' as const }
+const tile = { background: '#f3efe4', fit: 'contain' as const }
 
 export default defineConfig({
   headLinkOptions: { preset: '2023' },
