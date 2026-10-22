@@ -1,5 +1,6 @@
 // All UI text lives here so the voice can be reviewed in one place. The voice
-// is Boo Dou's (backend/internal/persona/boo_dou.md): polite, calm, specific.
+// is Boo Dou's (backend/internal/persona/boo_dou.md): casual, direct, warm,
+// with her old formal manners slipping out only at the one serious moment.
 export type ErrorKind = 'quota' | 'key' | 'config' | 'offline' | 'provider' | 'request' | 'unknown'
 
 export const copy = {
@@ -11,10 +12,10 @@ export const copy = {
     themeToDark: 'Ganti ke tema gelap',
   },
   empty: {
-    title: 'Selamat datang, aku Boo Dou.',
-    lead: 'Tanyakan apa saja, dalam bahasa Indonesia atau Inggris. Kalau belum tahu mulai dari mana, pilih salah satu di bawah.',
+    title: 'Halo, aku Boo Dou.',
+    lead: 'Mau tanya apa? Bahasa Indonesia atau Inggris, dua-duanya boleh. Kalau bingung mulai dari mana, ambil salah satu di bawah.',
     suggestionsLabel: 'Saran untuk memulai',
-    photo: { title: 'Jelaskan sebuah foto', detail: 'Lampirkan gambar, aku ceritakan apa yang terlihat' },
+    photo: { title: 'Jelaskan sebuah foto', detail: 'Lampirkan gambar, nanti aku ceritakan apa yang kelihatan' },
     code: {
       title: 'Minta contoh kode',
       detail: 'Contoh Go untuk membaca file baris per baris',
@@ -22,28 +23,28 @@ export const copy = {
     },
     rewrite: {
       title: 'Rapikan tulisanmu',
-      detail: 'Tempel teksmu, aku bantu membuatnya lebih jelas dan sopan',
-      prompt: 'Tolong rapikan tulisan berikut supaya lebih jelas dan sopan:\n\n',
+      detail: 'Tempel teksmu, aku bikin jadi lebih jelas',
+      prompt: 'Tolong rapikan tulisan berikut supaya lebih jelas dan enak dibaca:\n\n',
     },
   },
   conversation: {
     listLabel: 'Isi percakapan',
     you: 'Kamu:',
     assistant: 'Boo Dou:',
-    waiting: 'Boo Dou sedang menulis',
+    waiting: 'Boo Dou lagi menulis',
     stopped: 'Dihentikan',
     brokenOff: 'Terputus karena gangguan',
     loading: 'Membuka percakapan',
-    notFoundTitle: 'Percakapan ini tidak ada',
+    notFoundTitle: 'Percakapan ini nggak ada',
     notFoundBody: 'Mungkin sudah dihapus, atau tautannya keliru.',
     notFoundAction: 'Mulai percakapan baru',
     loadErrorTitle: 'Percakapan gagal dibuka',
     loadErrorAction: 'Coba buka lagi',
     viewImage: (i: number) => `Lihat gambar ${i} ukuran penuh`,
     imageLabel: (i: number, total: number) => (total > 1 ? `Gambar ${i} dari ${total}` : 'Gambar lampiran'),
-    dropHint: 'Lepaskan gambarnya di sini',
+    dropHint: 'Lepas gambarnya di sini',
     status: {
-      thinking: 'Boo Dou sedang menulis jawaban',
+      thinking: 'Boo Dou lagi menulis jawaban',
       error: 'Jawaban gagal',
       happy: 'Jawaban selesai',
       idle: 'Boo Dou siap',
@@ -52,26 +53,26 @@ export const copy = {
   errors: {
     retry: 'Kirim ulang pesan terakhir',
     titles: {
-      quota: 'Batas pemakaian provider tercapai',
-      key: 'Kunci API ditolak provider',
+      quota: 'Kuota provider lagi habis',
+      key: 'Kunci API-nya ditolak provider',
       config: 'Server belum siap menjawab',
-      offline: 'Server tidak terjangkau',
-      provider: 'Provider sedang bermasalah',
+      offline: 'Server nggak bisa dihubungi',
+      provider: 'Provider lagi bermasalah',
       request: 'Permintaan ini ditolak',
-      unknown: 'Jawaban belum sempat selesai',
+      unknown: 'Jawabannya belum sempat selesai',
     } as Record<ErrorKind, string>,
     nextStep: {
-      quota: 'Aku sudah menyimpan pesanmu. Kirim ulang setelah batasnya pulih.',
-      key: 'Aku sudah menyimpan pesanmu, jadi cukup kirim ulang setelah kuncinya diperbarui.',
+      quota: 'Pesanmu sudah aku simpan. Kirim ulang begitu batasnya pulih.',
+      key: 'Pesanmu sudah aku simpan, jadi tinggal kirim ulang setelah kuncinya diperbarui.',
       config: 'Isi LLM_API_KEY di backend/.env, jalankan ulang backend, lalu kirim pesanmu lagi.',
-      offline: 'Periksa koneksi internetmu dan pastikan backend berjalan, lalu kirim ulang.',
-      provider: 'Kirim ulang beberapa saat lagi. Kalau masih gagal, periksa status provider.',
+      offline: 'Cek koneksi internetmu dan pastikan backend jalan, lalu kirim ulang.',
+      provider: 'Coba kirim ulang sebentar lagi. Kalau masih gagal, cek status provider.',
       request: 'Ubah pesan atau lampirannya, lalu kirim lagi.',
-      unknown: 'Kirim ulang untuk mencoba sekali lagi.',
+      unknown: 'Kirim ulang, ya. Kita coba sekali lagi.',
     } as Record<ErrorKind, string>,
-    lastFailed: 'Jawaban untuk pesan terakhirmu belum sempat selesai.',
+    lastFailed: 'Jawaban buat pesan terakhirmu belum sempat selesai.',
   },
-  offline: 'Kamu sedang offline. Percakapan yang sudah terbuka tetap bisa dibaca, dan pesan baru bisa dikirim lagi setelah koneksi kembali.',
+  offline: 'Kamu lagi offline. Percakapan yang sudah terbuka tetap bisa dibaca, dan pesan baru bisa dikirim lagi begitu koneksi balik.',
   composer: {
     label: 'Pesan untuk Boo Dou',
     placeholder: 'Tulis pesanmu',
@@ -85,8 +86,8 @@ export const copy = {
     compressing: 'Memperkecil',
     uploadLabel: (i: number) => `Mengunggah gambar ${i}`,
     removeImage: (i: number) => `Hapus gambar ${i}`,
-    processing: 'Gambar sedang disiapkan',
-    compressFailed: (name: string) => `${name}: browser tidak bisa membaca gambar ini.`,
+    processing: 'Gambar lagi disiapkan',
+    compressFailed: (name: string) => `${name}: browser nggak bisa membaca gambar ini.`,
     tooBigAfter: (name: string) => `${name}: masih lebih dari 5 MB setelah diperkecil.`,
     uploadFailed: (name: string, msg: string) => `${name}: gagal diunggah. ${msg}`,
     rejected: (name: string, reason: string) => `${name}: ${reason}.`,
@@ -97,7 +98,7 @@ export const copy = {
     close: 'Tutup riwayat percakapan',
     newChat: 'Percakapan baru',
     loading: 'Memuat riwayat',
-    empty: 'Belum ada percakapan. Pesan pertamamu akan tersimpan di sini.',
+    empty: 'Belum ada percakapan. Pesan pertamamu nanti tersimpan di sini.',
     reload: 'Muat ulang riwayat',
     untitled: 'Percakapan tanpa judul',
     renameLabel: 'Judul percakapan',
@@ -106,7 +107,9 @@ export const copy = {
   },
   deleteDialog: {
     title: 'Hapus percakapan ini?',
-    body: (t: string) => `Aku akan menghapus "${t}" beserta semua pesan dan gambarnya secara permanen. Ini tidak bisa dikembalikan.`,
+    // The one place her old formal manners slip out: a permanent delete is serious.
+    body: (t: string) =>
+      `Aku akan menghapus "${t}" beserta semua pesan dan gambarnya. Mohon diperhatikan, penghapusan ini bersifat permanen dan tidak dapat dikembalikan.`,
     cancel: 'Batal',
     confirm: 'Hapus percakapan',
   },

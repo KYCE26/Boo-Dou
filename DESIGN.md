@@ -4,11 +4,13 @@ Arah desain untuk semua kerja UI. Dokumen ini berisi keputusan pemilik produk. A
 
 Dial: ENERGY 3 / RHYTHM 2 / MOTION 3
 
-Design Read: aplikasi chat asisten AI untuk pengguna berbahasa Indonesia, dengan bahasa visual kertas washi dan tinta sumi yang tertata seperti seorang gentleman, dial ENERGY 3 / RHYTHM 2 / MOTION 3.
+Design Read: aplikasi chat asisten AI untuk pengguna berbahasa Indonesia, dengan bahasa visual kertas washi dan tinta sumi, dan suara yang santai tapi hangat, dial ENERGY 3 / RHYTHM 2 / MOTION 3.
 
 ## Identitas
 
-Boo Dou adalah asisten AI berwujud hantu kecil bertopi fedora. Personanya seorang gentleman: sopan, tenang, tertata, dengan sisi bersemangat yang muncul sesekali. Sumber persona dan cara bicaranya ada di `backend/internal/persona/boo_dou.md`. Teks UI ditulis dengan suara yang sama.
+Boo Dou adalah asisten AI berwujud hantu kecil bertopi fedora, perempuan. Dulu ia anak dari keluarga yang sangat ketat; sekarang ia hantu tomboi yang blak-blakan tapi baik hati, protektif kalau user mau melakukan hal berisiko, dan sesekali masih kelepasan bicara sangat sopan, sisa didikan lamanya. Sumber persona dan cara bicaranya ada di `backend/internal/persona/boo_dou.md`.
+
+Suara copy UI ikut persona ini: santai, langsung, hangat, memakai "aku" dan "kamu". Sisa kesopanan lamanya muncul jarang, hanya di momen yang memang serius seperti konfirmasi hapus permanen.
 
 ## Palet
 
@@ -94,7 +96,7 @@ Bintang 4 sudut di pita topi tidak dipakai sebagai ikon UI, karena termasuk pola
 
 ## Tema
 
-Terang dan gelap sama-sama jalan penuh. Tema terang jadi default karena persona gentleman dan nuansa kertas washi lebih kuat di terang. Tema gelap ikut `prefers-color-scheme` kalau user belum memilih.
+Terang dan gelap sama-sama jalan penuh. Tema terang jadi default karena nuansa kertas washi lebih kuat di terang. Tema gelap ikut `prefers-color-scheme` kalau user belum memilih.
 
 ## Motion
 
