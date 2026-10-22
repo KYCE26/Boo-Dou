@@ -25,12 +25,13 @@ const OUT: Record<Motion, Keyframe[]> = {
 async function animateClose(dialog: HTMLDialogElement) {
   if (!prefersReducedMotion()) {
     const timing = { duration: 160, easing: 'cubic-bezier(.4, 0, 1, 1)', fill: 'forwards' as const }
-    const backdrop = dialog.animate([{ opacity: 1 }, { opacity: 0 }], { ...timing, pseudoElement: '::backdrop' })
+    dialog.animate([{ opacity: 1 }, { opacity: 0 }], { ...timing, pseudoElement: '::backdrop' })
     await dialog.animate(OUT[props.motion], timing).finished.catch(() => {})
-    backdrop.cancel()
   }
-  dialog.close()
   dialog.getAnimations().forEach((a) => a.cancel())
+  // Reopened while the exit was playing: stay open instead of closing under it.
+  if (props.open) return
+  dialog.close()
 }
 
 // showModal() makes the rest of the page inert, which is what traps focus and
@@ -42,7 +43,8 @@ watch(
     const dialog = el.value
     if (!dialog) return
     if (open && !dialog.open) dialog.showModal()
-    else if (!open && dialog.open) await animateClose(dialog)
+    else if (open) dialog.getAnimations().forEach((a) => a.cancel())
+    else if (dialog.open) await animateClose(dialog)
   },
   { immediate: true },
 )
