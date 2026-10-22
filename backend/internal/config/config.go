@@ -22,6 +22,8 @@ type Config struct {
 	LLMVision   bool
 	CORSOrigin  string
 	DatabaseURL string
+	// UploadDir is relative to the backend working directory unless absolute.
+	UploadDir string
 
 	visionRaw string
 }
@@ -41,6 +43,7 @@ func Load() (*Config, error) {
 		LLMQuotaReset: strings.TrimSpace(os.Getenv("LLM_QUOTA_RESET")),
 		CORSOrigin:    strings.TrimRight(strings.TrimSpace(os.Getenv("CORS_ORIGIN")), "/"),
 		DatabaseURL:   strings.TrimSpace(os.Getenv("DATABASE_URL")),
+		UploadDir:     envOr("UPLOAD_DIR", "data/uploads"),
 		visionRaw:     strings.TrimSpace(os.Getenv("LLM_VISION")),
 	}
 

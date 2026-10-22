@@ -34,3 +34,6 @@ npm-debug.log*
 
 # Flattened mascot copy used to render PWA icons
 frontend/.icon-build/
+
+# Uploaded images (user data, never committed)
+backend/data/
