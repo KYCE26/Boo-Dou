@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { uploadAttachment } from '../api/attachments'
 import type { Attachment } from '../api/conversations'
 import { copy } from '../copy'
@@ -143,11 +143,18 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+const INPUT_MAX = 200
+
+// Grow with the text. scrollHeight excludes the border, so add it back or a
+// single line ends up 2px short and shows a scrollbar; scrolling only starts
+// once the box has reached its maximum height.
 function resizeInput() {
   const el = inputEl.value
   if (!el) return
   el.style.height = 'auto'
-  el.style.height = `${Math.min(el.scrollHeight, 200)}px`
+  const full = el.scrollHeight + (el.offsetHeight - el.clientHeight)
+  el.style.height = `${Math.min(full, INPUT_MAX)}px`
+  el.style.overflowY = full > INPUT_MAX ? 'auto' : 'hidden'
 }
 
 // On phones the on-screen keyboard can cover the field; bring it back into view.
@@ -173,6 +180,8 @@ async function setText(value: string) {
   el?.focus()
   el?.setSelectionRange(value.length, value.length)
 }
+
+onMounted(resizeInput)
 
 onBeforeUnmount(() => {
   for (const d of drafts.value) {
@@ -401,6 +410,7 @@ textarea {
   background: var(--color-bg);
   resize: none;
   line-height: 1.5;
+  overflow-y: hidden;
 }
 
 textarea::placeholder {
